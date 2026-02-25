@@ -6,10 +6,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
 
 # ================== CONFIG ==================
-CONSUMER_ID = "bc7856ded484a50b96e47ee39dd8f61"
-CONSUMER_SECRET = "7c9cfd02f9534850b3fa5ec2342defe9"
-TELEGRAM_BOT_TOKEN = "8710117276:AAEG2RFhyuD_75uYlyTackEDBY0Wu3XvpZg"
-TELEGRAM_CHAT_ID = "797077732"
+
 
 # ================== LẤY ACCESS TOKEN ==================
 def get_access_token():
