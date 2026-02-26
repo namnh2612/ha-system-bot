@@ -2,6 +2,10 @@ import os
 import time
 import requests
 
+# In IP công khai để đăng ký với SSI
+import requests
+print("PUBLIC IP của Railway:", requests.get('https://api.ipify.org').text)
+
 # Load từ Environment Variables trên Railway
 CONSUMER_ID = os.getenv('CONSUMER_ID')
 CONSUMER_SECRET = os.getenv('CONSUMER_SECRET')
