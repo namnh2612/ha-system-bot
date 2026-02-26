@@ -1,16 +1,17 @@
 import os
 import time
 import requests
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
-from datetime import datetime
 
-# ================== CONFIG ==================
-CONSUMER_ID = "bc7856ded484a50b96e47ee39dd8f61"
-CONSUMER_SECRET = "7c9cfd02f9534850b3fa5ec2342defe9"
-TELEGRAM_CHAT_ID = "797077732"
+# Load từ Environment Variables trên Railway
+CONSUMER_ID = os.getenv('CONSUMER_ID')
+CONSUMER_SECRET = os.getenv('CONSUMER_SECRET')
+TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 
-# ================== LẤY ACCESS TOKEN ==================
+if not all([CONSUMER_ID, CONSUMER_SECRET, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID]):
+    print("❌ Thiếu biến môi trường. Kiểm tra Settings → Variables trên Railway.")
+    exit(1)
+
 def get_access_token():
     url = "https://api.ssi.com.vn/v1/oauth/token"
     payload = {
@@ -20,19 +21,28 @@ def get_access_token():
     }
     try:
         r = requests.post(url, data=payload)
-        return r.json().get("access_token")
-    except:
+        r.raise_for_status()
+        token = r.json().get("access_token")
+        print("✅ Lấy Access Token thành công")
+        return token
+    except Exception as e:
+        print(f"❌ Lỗi lấy token: {e}")
         return None
 
-# ================== CẬP NHẬT GIÁ ==================
+def send_telegram(message):
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    try:
+        requests.post(url, data={"chat_id": TELEGRAM_CHAT_ID, "text": message})
+        print("✅ Telegram sent")
+    except Exception as e:
+        print(f"Lỗi gửi Telegram: {e}")
+
 def update_prices():
     token = get_access_token()
     if not token:
-        send_telegram("❌ Không lấy được Access Token")
+        send_telegram("❌ Không lấy được Access Token từ SSI")
         return
 
-    # Lấy danh sách ticker từ Google Sheets (bạn sẽ kết nối sau)
-    # Hiện tại dùng danh sách mẫu để test
     tickers = ["HPG", "FPT", "ACB", "CTG", "MSN", "IJC"]
 
     for ticker in tickers:
@@ -44,20 +54,11 @@ def update_prices():
                 data = r.json()
                 price = data.get("lastPrice", 0)
                 print(f"{ticker}: {price}")
-                # Sau này sẽ ghi vào Google Sheets
-        except:
-            print(f"Lỗi {ticker}")
+        except Exception as e:
+            print(f"Lỗi {ticker}: {e}")
 
-    send_telegram("✅ Đã cập nhật giá thành công")
-
-# ================== GỬI TELEGRAM ==================
-def send_telegram(message):
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-    requests.post(url, data={"chat_id": TELEGRAM_CHAT_ID, "text": message})
-
-# ================== CHẠY LIÊN TỤC ==================
 if __name__ == "__main__":
     print("🚀 HA-System bắt đầu chạy...")
     while True:
         update_prices()
-        time.sleep(30)   # Chạy mỗi 30 giây (sau này chỉnh thành 10 giây)
+        time.sleep(30)
